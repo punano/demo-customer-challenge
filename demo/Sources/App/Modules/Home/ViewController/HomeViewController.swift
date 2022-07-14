@@ -13,6 +13,7 @@ final class HomeViewController: BaseViewController<HomeViewModel> {
     @IBOutlet private weak var collectionView: UICollectionView!
     
     private var triggerLoadMore: Driver<Void>!
+    private var triggerReload = PublishSubject<Void>()
     
     override var setting: NavigationSetting {
         return NavigationSetting(isHiddenNavigation: true)
@@ -37,13 +38,15 @@ final class HomeViewController: BaseViewController<HomeViewModel> {
                     ? Driver.just(())
                     : Driver.empty()
             }
+        collectionView.addSubview(refreshControl)
+        refreshControl.rx.controlEvent(.valueChanged).mapToVoid()
+            .bind(to: triggerReload)
+            .disposed(by: disposeBag)
     }
     
     override func bind() {
-        let input = HomeViewModel.Input(searchTrigger: searchView.rx.text
-                                            .distinctUntilChanged()
-                                            .debounce(.milliseconds(800), scheduler: MainScheduler.instance)
-                                            .asDriverOnErrorJustComplete(),
+        let input = HomeViewModel.Input(reloadTrigger: triggerReload.asDriverOnErrorJustComplete(),
+                                        searchTrigger: searchView.rx.text.asDriverOnErrorJustComplete(),
                                         loadMoreTrigger: triggerLoadMore,
                                         itemSelectTrigger: collectionView.rx.itemSelected.asDriverOnErrorJustComplete())
         let output = viewModel.transform(input: input)
@@ -52,11 +55,15 @@ final class HomeViewController: BaseViewController<HomeViewModel> {
             .drive()
             .disposed(by: disposeBag)
         output.loading
-            .drive(onNext: { isLoading in
-                isLoading ? HudManager.shared.showHUD() : HudManager.shared.hideHUD()
+            .drive(onNext: { [weak self] isLoading in
+                if isLoading {
+                    HudManager.shared.showHUD()
+                } else {
+                    self?.refreshControl.endRefreshing()
+                    HudManager.shared.hideHUD()
+                }
             })
             .disposed(by: disposeBag)
-        
         output.data
             .do(onNext: { [weak self] data in
                 data.count > 0 ? self?.collectionView.restore() : self?.collectionView.setEmptyMessage("No movie found.\nTry to adjust search parameters")
@@ -67,13 +74,5 @@ final class HomeViewController: BaseViewController<HomeViewModel> {
                 cell.config(with: MovieCollectionCellViewModel(with: element), indexPath: idxPath)
                 return cell
             }.disposed(by: disposeBag)
-    }
-}
-
-extension HomeViewController: UICollectionViewDelegateFlowLayout {
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let width = UIScreen.main.bounds.width * 0.46
-        let height = UIScreen.main.bounds.height * 0.3
-        return CGSize(width: width, height: height)
     }
 }

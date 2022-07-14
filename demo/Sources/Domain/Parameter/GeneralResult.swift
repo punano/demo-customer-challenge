@@ -17,3 +17,20 @@ struct PaggingResult<T: Codable>: Codable {
         case search = "Search"
     }
 }
+
+struct API {
+    struct Parameters {
+        static let apiKey = "apikey"
+        static let searchQuery = "s"
+        static let movieId = "i"
+        static let type = "type"
+        static let page = "page"
+        
+        static var defaultParameters: [String: Any] {
+            return [
+                API.Parameters.apiKey: AppManager.shared.appConfig.apiKey,
+                API.Parameters.type: "movie"
+            ]
+        }
+    }
+}

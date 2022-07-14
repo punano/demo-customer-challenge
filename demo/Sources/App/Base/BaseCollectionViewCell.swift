@@ -23,6 +23,12 @@ class BaseCollectionViewCell<T: CollectionViewModelProtocol>: UICollectionViewCe
         self.setupCell()
     }
     
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        configUI()
+    }
+    
+    func configUI() {}
     func setupCell() {}
 }
 

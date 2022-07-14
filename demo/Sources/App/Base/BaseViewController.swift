@@ -54,7 +54,7 @@ class BaseViewController<T: ViewModelProtocol>: UIViewController, UseViewModel, 
     func bind() {}
     
     func configUI() {
-        refreshControl.tintColor = .clear
+        refreshControl.tintColor = .label
     }
     
     func configRx() {}

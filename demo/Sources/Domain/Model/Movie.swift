@@ -8,11 +8,15 @@
 import Foundation
 import UIKit
 
+enum MovieType: String, Codable {
+    case movie = "movie"
+}
+
 struct Movie: Codable {
     var title: String?
     var year: String?
     var imdbID: String?
-    var type: String?
+    var type: MovieType?
     var poster: String?
     
     enum CodingKeys: String, CodingKey {

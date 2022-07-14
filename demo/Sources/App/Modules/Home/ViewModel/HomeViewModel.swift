@@ -13,6 +13,7 @@ import XCoordinator
 final class HomeViewModel: BaseViewModel {
     @Injected var movieUseCase: MovieUseCase
     struct Input {
+        let reloadTrigger: Driver<Void>
         let searchTrigger: Driver<String?>
         let loadMoreTrigger: Driver<Void>
         let itemSelectTrigger: Driver<IndexPath>
@@ -28,6 +29,13 @@ final class HomeViewModel: BaseViewModel {
     
     func transform(input: Input) -> Output {
         input.searchTrigger
+            .distinctUntilChanged()
+            .debounce(.milliseconds(800))
+            .drive(onNext: startSearch)
+            .disposed(by: disposeBag)
+        
+        input.reloadTrigger
+            .withLatestFrom(input.searchTrigger)
             .drive(onNext: startSearch)
             .disposed(by: disposeBag)
         

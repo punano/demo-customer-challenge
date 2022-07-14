@@ -9,12 +9,9 @@ import RxSwift
 
 struct MovieRepository: MovieUseCase {
     func searchMovie(with keyWord: String, at page: Int) -> Observable<PaggingResult<Movie>> {
-        let params: [String: Any] = [
-            "s": keyWord,
-            "page": page,
-            "apikey": AppManager.shared.appConfig.apiKey,
-            "type": "movie"
-        ]
+        var params = API.Parameters.defaultParameters
+        params[API.Parameters.searchQuery] = keyWord
+        params[API.Parameters.page] = page
         return Observable.create { obser in
             PrivateManagerAPI.shared.run(request: MovieServicesFactory().searchMovieRequest(), input: params, completionHandler: { (response) in
                 switch response {
@@ -27,4 +24,6 @@ struct MovieRepository: MovieUseCase {
             return Disposables.create()
         }
     }
+    
+    
 }
